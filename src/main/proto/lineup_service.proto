@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package lineup.v1;
+
+option java_multiple_files = true;
+option java_package = "com.playtab.lineupservice.grpc.proto";
+option java_outer_classname = "LineupServiceProto";
+
+import "google/protobuf/timestamp.proto";
+
+service LineupService {
+  // 공연자 목록 조회
+  // - 비로그인 가능
+  // - stage_name으로 ARTIST / BUSKING / DJ / CLUB 필터
+  // - 로그인 사용자라면 BFF가 gRPC metadata에 user_id를 전달
+  // - lineup-service는 metadata user_id 기준으로 is_favorited 계산
+  rpc GetPerformers (GetPerformersRequest) returns (GetPerformersResponse);
+
+  // 일자별 타임테이블 조회
+  // - 비로그인 가능
+  // - stage_name으로 ARTIST / BUSKING / DJ / CLUB 필터 가능
+  // - 로그인 사용자라면 BFF가 gRPC metadata에 user_id를 전달
+  // - lineup-service는 metadata user_id 기준으로 performer.is_favorited 계산
+  rpc GetSchedulesByDay (GetSchedulesByDayRequest) returns (GetSchedulesByDayResponse);
+
+  // 현재 로그인 사용자의 즐겨찾기 추가
+  // - user_id는 request가 아니라 gRPC metadata로 전달받음
+  rpc AddFavorite (AddFavoriteRequest) returns (AddFavoriteResponse);
+
+  // 현재 로그인 사용자의 즐겨찾기 해제
+  // - user_id는 request가 아니라 gRPC metadata로 전달받음
+  rpc RemoveFavorite (RemoveFavoriteRequest) returns (RemoveFavoriteResponse);
+
+  // 현재 로그인 사용자의 즐겨찾기 공연자 목록 조회
+  // - user_id는 request가 아니라 gRPC metadata로 전달받음
+  rpc GetFavorites (GetFavoritesRequest) returns (GetFavoritesResponse);
+}
+
+message LocalizedText {
+  map<string, string> values = 1;
+}
+
+enum ScheduleStatusProto {
+  SCHEDULE_STATUS_PROTO_UNSPECIFIED = 0;
+  SCHEDULE_STATUS_PROTO_SCHEDULED = 1;
+  SCHEDULE_STATUS_PROTO_CANCELLED = 2;
+  SCHEDULE_STATUS_PROTO_COMPLETED = 3;
+}
+
+message Performer {
+  int64 id = 1;
+  LocalizedText name = 2;
+  LocalizedText description = 3;
+  string image_url = 4;
+  bool is_active = 5;
+  bool is_favorited = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message Stage {
+  int64 id = 1;
+  LocalizedText name = 2;
+  LocalizedText location_desc = 3;
+  int32 display_order = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message FestivalDay {
+  int64 id = 1;
+  int32 day_number = 2;
+  string event_date = 3; // yyyy-MM-dd
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message PerformanceDuration {
+  int32 duration_minutes = 1;
+  string duration_label = 2; // ex) "40m", "1h 20m"
+}
+
+message PerformanceSchedule {
+  int64 id = 1;
+  Performer performer = 2;
+  Stage stage = 3;
+  FestivalDay festival_day = 4;
+  google.protobuf.Timestamp start_at = 5;
+  google.protobuf.Timestamp end_at = 6;
+  ScheduleStatusProto status = 7;
+  PerformanceDuration duration = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message Favorite {
+  int64 id = 1;
+  int64 user_id = 2;
+  int64 performer_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message GetPerformersRequest {
+  bool active_only = 1;
+  string stage_name = 2; // ARTIST / BUSKING / DJ / CLUB, 미지정 시 전체
+}
+
+message GetPerformersResponse {
+  repeated Performer performers = 1;
+}
+
+message GetSchedulesByDayRequest {
+  int32 day_number = 1; // Day1, Day2, Day3
+  string stage_name = 2; // ARTIST / BUSKING / DJ / CLUB, 미지정 시 전체
+}
+
+message GetSchedulesByDayResponse {
+  repeated PerformanceSchedule schedules = 1;
+}
+
+message AddFavoriteRequest {
+  int64 performer_id = 1;
+}
+
+message AddFavoriteResponse {
+  Favorite favorite = 1;
+}
+
+message RemoveFavoriteRequest {
+  int64 performer_id = 1;
+}
+
+message RemoveFavoriteResponse {
+  bool success = 1;
+}
+
+message GetFavoritesRequest {
+}
+
+message GetFavoritesResponse {
+  repeated Performer performers = 1;
+}
