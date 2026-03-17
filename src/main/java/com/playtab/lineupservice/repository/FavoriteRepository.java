@@ -14,7 +14,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     boolean existsByUserIdAndPerformer(Long userId, Performer performer);
 
-    void deleteByUserIdAndPerformer(Long userId, Performer performer);
+    long deleteByUserIdAndPerformer(Long userId, Performer performer);
 
     @EntityGraph(attributePaths = {"performer"})
     List<Favorite> findByUserId(Long userId);
