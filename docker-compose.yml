@@ -1,0 +1,15 @@
+services:
+  lineup-service:
+    image: ${ECR_IMAGE}
+    container_name: lineup-service
+    ports:
+      - "9091:9091"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - playtap
+
+networks:
+  playtap:
+    external: true
