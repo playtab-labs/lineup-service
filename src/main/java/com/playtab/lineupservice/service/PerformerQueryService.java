@@ -39,7 +39,7 @@ public class PerformerQueryService {
                 ));
     }
 
-    public Set<Long> getFavoritePerformerIds(Long userId, List<Performer> performers) {
+    public Set<Long> getFavoritePerformerIds(String userId, List<Performer> performers) {
         if (userId == null || performers.isEmpty()) {
             return Set.of();
         }

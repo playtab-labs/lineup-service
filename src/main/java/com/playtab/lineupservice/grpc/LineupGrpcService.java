@@ -45,7 +45,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     public void getPerformers(GetPerformersRequest request, StreamObserver<GetPerformersResponse> responseObserver) {
         try {
             // 비로그인 조회를 위해 optional 방식으로 처리
-            Long userId = getOptionalCurrentUserId();
+            String userId = getOptionalCurrentUserId();
 
 
             // 공연자 목록 조회를 QueryService에 위임
@@ -85,7 +85,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
                                   StreamObserver<GetSchedulesByDayResponse> responseObserver) {
         try {
 
-            Long userId = getOptionalCurrentUserId();
+            String userId = getOptionalCurrentUserId();
 
             List<PerformanceSchedule> schedules =
                     scheduleQueryService.getSchedulesByDay(
@@ -121,7 +121,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     @Override
     public void addFavorite(AddFavoriteRequest request, StreamObserver<AddFavoriteResponse> responseObserver) {
         try {
-            Long userId = currentUserProvider.getCurrentUserId();
+            String userId = currentUserProvider.getCurrentUserId();
 
             Favorite favorite = favoriteService.addFavorite(userId, request.getPerformerId());
 
@@ -140,7 +140,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     @Override
     public void removeFavorite(RemoveFavoriteRequest request, StreamObserver<RemoveFavoriteResponse> responseObserver) {
         try {
-            Long userId = currentUserProvider.getCurrentUserId();
+            String userId = currentUserProvider.getCurrentUserId();
 
             favoriteService.removeFavorite(userId, request.getPerformerId());
 
@@ -158,7 +158,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     @Override
     public void getFavorites(GetFavoritesRequest request, StreamObserver<GetFavoritesResponse> responseObserver) {
         try {
-            Long userId = currentUserProvider.getCurrentUserId();
+            String userId = currentUserProvider.getCurrentUserId();
 
             List<Performer> performers = favoriteService.getFavorites(userId);
 
@@ -176,7 +176,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
 
 
     // 신규 private 헬퍼 메서드 추가
-    private Long getOptionalCurrentUserId() {
+    private String getOptionalCurrentUserId() {
         try {
             return currentUserProvider.getCurrentUserId();
         } catch (Exception e) {

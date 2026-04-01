@@ -7,15 +7,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class CurrentUserProvider {
 
-    public Long getCurrentUserId() {
-        Long userId = GrpcUserIdInterceptor.USER_ID_CONTEXT_KEY.get(Context.current());
+    public String getCurrentUserId() {
+        String identityId = GrpcIdentityInterceptor.IDENTITY_ID_CONTEXT_KEY.get(Context.current());
 
-        if (userId == null) {
+        if (identityId == null) {
             throw Status.UNAUTHENTICATED
-                    .withDescription("user_id metadata is required")
+                    .withDescription("x-identity-id metadata is required")
                     .asRuntimeException();
         }
 
-        return userId;
+        return identityId;
+    }
+
+    public String getCurrentRole() {
+        return GrpcIdentityInterceptor.ROLE_CONTEXT_KEY.get(Context.current());
     }
 }

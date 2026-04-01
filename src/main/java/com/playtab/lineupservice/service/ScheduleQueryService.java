@@ -34,7 +34,7 @@ public class ScheduleQueryService {
                 .toList();
     }
 
-    public Set<Long> getFavoritePerformerIds(Long userId, List<PerformanceSchedule> schedules) {
+    public Set<Long> getFavoritePerformerIds(String userId, List<PerformanceSchedule> schedules) {
         if (userId == null || schedules.isEmpty()) {
             return Set.of();
         }

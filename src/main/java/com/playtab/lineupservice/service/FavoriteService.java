@@ -21,7 +21,7 @@ public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final PerformerRepository performerRepository;
 
-    public Favorite addFavorite(Long userId, Long performerId) {
+    public Favorite addFavorite(String userId, Long performerId) {
         Performer performer = performerRepository.findById(performerId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PERFORMER_NOT_FOUND));
 
@@ -38,7 +38,7 @@ public class FavoriteService {
         return favoriteRepository.save(favorite);
     }
 
-    public void removeFavorite(Long userId, Long performerId) {
+    public void removeFavorite(String userId, Long performerId) {
         Performer performer = performerRepository.findById(performerId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.PERFORMER_NOT_FOUND));
 
@@ -46,7 +46,7 @@ public class FavoriteService {
     }
 
     @Transactional
-    public List<Performer> getFavorites(Long userId) {
+    public List<Performer> getFavorites(String userId) {
         return favoriteRepository.findByUserId(userId).stream()
                 .map(Favorite::getPerformer)
                 .toList();

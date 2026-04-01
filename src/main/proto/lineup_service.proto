@@ -12,27 +12,27 @@ service LineupService {
   // 공연자 목록 조회
   // - 비로그인 가능
   // - stage_name으로 ARTIST / BUSKING / DJ / CLUB 필터
-  // - 로그인 사용자라면 BFF가 gRPC metadata에 user_id를 전달
-  // - lineup-service는 metadata user_id 기준으로 is_favorited 계산
+  // - 로그인 사용자라면 BFF가 gRPC metadata에 x-identity-id를 전달
+  // - lineup-service는 metadata x-identity-id 기준으로 is_favorited 계산
   rpc GetPerformers (GetPerformersRequest) returns (GetPerformersResponse);
 
   // 일자별 타임테이블 조회
   // - 비로그인 가능
   // - stage_name으로 ARTIST / BUSKING / DJ / CLUB 필터 가능
-  // - 로그인 사용자라면 BFF가 gRPC metadata에 user_id를 전달
-  // - lineup-service는 metadata user_id 기준으로 performer.is_favorited 계산
+  // - 로그인 사용자라면 BFF가 gRPC metadata에 x-identity-id를 전달
+  // - lineup-service는 metadata x-identity-id 기준으로 performer.is_favorited 계산
   rpc GetSchedulesByDay (GetSchedulesByDayRequest) returns (GetSchedulesByDayResponse);
 
   // 현재 로그인 사용자의 즐겨찾기 추가
-  // - user_id는 gRPC metadata로 전달받음 ex. key: user_id, value: "123"
+  // - x-identity-id는 gRPC metadata로 전달받음 ex. key: x-identity-id, value: "uuid"
   rpc AddFavorite (AddFavoriteRequest) returns (AddFavoriteResponse);
 
   // 현재 로그인 사용자의 즐겨찾기 해제
-  // - user_id는 gRPC metadata로 전달받음
+  // - x-identity-id는 gRPC metadata로 전달받음
   rpc RemoveFavorite (RemoveFavoriteRequest) returns (RemoveFavoriteResponse);
 
   // 현재 로그인 사용자의 즐겨찾기 공연자 목록 조회
-  // - user_id는 gRPC metadata로 전달받음
+  // - x-identity-id는 gRPC metadata로 전달받음
   rpc GetFavorites (GetFavoritesRequest) returns (GetFavoritesResponse);
 }
 
@@ -95,7 +95,7 @@ message PerformanceSchedule {
 
 message Favorite {
   int64 id = 1;
-  int64 user_id = 2;
+  string user_id = 2;
   int64 performer_id = 3;
   google.protobuf.Timestamp created_at = 4;
 }

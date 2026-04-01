@@ -1,0 +1,1 @@
+ALTER TABLE favorites ALTER COLUMN user_id TYPE VARCHAR(36) USING user_id::VARCHAR(36);
