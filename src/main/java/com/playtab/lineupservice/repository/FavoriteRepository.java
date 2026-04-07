@@ -10,12 +10,12 @@ import java.util.Optional;
 
 public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
-    Optional<Favorite> findByUserIdAndPerformer(Long userId, Performer performer);
+    Optional<Favorite> findByUserIdAndPerformer(String userId, Performer performer);
 
-    boolean existsByUserIdAndPerformer(Long userId, Performer performer);
+    boolean existsByUserIdAndPerformer(String userId, Performer performer);
 
-    long deleteByUserIdAndPerformer(Long userId, Performer performer);
+    long deleteByUserIdAndPerformer(String userId, Performer performer);
 
     @EntityGraph(attributePaths = {"performer"})
-    List<Favorite> findByUserId(Long userId);
+    List<Favorite> findByUserId(String userId);
 }

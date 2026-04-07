@@ -37,7 +37,7 @@ public class Favorite {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "performer_id", nullable = false)
@@ -48,7 +48,7 @@ public class Favorite {
     private LocalDateTime createdAt;
 
     @Builder
-    public Favorite(Long userId, Performer performer) {
+    public Favorite(String userId, Performer performer) {
         this.userId = userId;
         this.performer = performer;
     }

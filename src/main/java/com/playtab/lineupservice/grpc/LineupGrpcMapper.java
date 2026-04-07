@@ -73,6 +73,7 @@ public class LineupGrpcMapper {
                 com.playtab.lineupservice.grpc.proto.Favorite.newBuilder()
                         .setId(favorite.getId())
                         .setUserId(favorite.getUserId())
+
                         .setPerformerId(favorite.getPerformer().getId());
 
         if (favorite.getCreatedAt() != null) {
