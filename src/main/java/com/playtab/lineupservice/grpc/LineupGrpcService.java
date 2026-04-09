@@ -12,6 +12,7 @@ import com.playtab.lineupservice.service.FavoriteService;
 // 조회 전용 서비스 2개 추가
 // PerformerQueryService: 공연자 조회 전용
 // ScheduleQueryService: 스케줄 조회 전용
+import com.playtab.lineupservice.service.FestivalDayQueryService;
 import com.playtab.lineupservice.service.PerformerQueryService;
 import com.playtab.lineupservice.service.ScheduleQueryService;
 
@@ -19,8 +20,8 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @GrpcService
 @RequiredArgsConstructor
@@ -32,6 +33,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     // 조회 전용 서비스 필드 추가
     private final PerformerQueryService performerQueryService;
     private final ScheduleQueryService scheduleQueryService;
+    private final FestivalDayQueryService festivalDayQueryService;
 
     private final CurrentUserProvider currentUserProvider;
     private final LineupGrpcMapper lineupGrpcMapper;
@@ -84,30 +86,42 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     public void getSchedulesByDay(GetSchedulesByDayRequest request,
                                   StreamObserver<GetSchedulesByDayResponse> responseObserver) {
         try {
-
+            String locale = request.getLocale();
             String userId = getOptionalCurrentUserId();
 
             List<PerformanceSchedule> schedules =
                     scheduleQueryService.getSchedulesByDay(
-                            request.getDayNumber(),
+                            request.getDayId(),
                             request.getStageName()
                     );
 
-            // 조회된 스케줄에 포함된 performer 중 현재 사용자가 즐겨찾기한 performer id 집합 조회
             Set<Long> favoriteIds = scheduleQueryService.getFavoritePerformerIds(userId, schedules);
 
-            GetSchedulesByDayResponse.Builder response =
-                    GetSchedulesByDayResponse.newBuilder();
+            // display_order 순 정렬 후 stage별 그룹핑 (삽입 순서 유지)
+            Map<Long, List<PerformanceSchedule>> byStage = schedules.stream()
+                    .sorted(Comparator.comparingInt(s -> s.getStage().getDisplayOrder()))
+                    .collect(Collectors.groupingBy(
+                            s -> s.getStage().getId(),
+                            LinkedHashMap::new,
+                            Collectors.toList()
+                    ));
 
-            for (PerformanceSchedule schedule : schedules) {
+            GetSchedulesByDayResponse.Builder response = GetSchedulesByDayResponse.newBuilder();
 
-                boolean isFavorited = favoriteIds.contains(schedule.getPerformer().getId());
+            byStage.forEach((stageId, stageSchedules) -> {
+                com.playtab.lineupservice.grpc.proto.StageSchedule.Builder stageSchedule =
+                        com.playtab.lineupservice.grpc.proto.StageSchedule.newBuilder()
+                                .setStage(lineupGrpcMapper.toStageSlimProto(
+                                        stageSchedules.get(0).getStage(), locale));
 
-                // schedule 전체를 proto로 변환
-                response.addSchedules(
-                        lineupGrpcMapper.toPerformanceScheduleProto(schedule, isFavorited)
-                );
-            }
+                stageSchedules.forEach(schedule -> {
+                    boolean isFavorited = favoriteIds.contains(schedule.getPerformer().getId());
+                    stageSchedule.addArtists(
+                            lineupGrpcMapper.toArtistScheduleProto(schedule, isFavorited, locale));
+                });
+
+                response.addStages(stageSchedule.build());
+            });
 
             responseObserver.onNext(response.build());
             responseObserver.onCompleted();
@@ -166,6 +180,23 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
             for (Performer performer : performers) {
                 response.addPerformers(lineupGrpcMapper.toPerformerProto(performer, true));
             }
+
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+
+    @Override
+    public void getFestivalDays(GetFestivalDaysRequest request,
+                                StreamObserver<GetFestivalDaysResponse> responseObserver) {
+        try {
+            GetFestivalDaysResponse.Builder response = GetFestivalDaysResponse.newBuilder();
+
+            festivalDayQueryService.getFestivalDays()
+                    .forEach(day -> response.addFestivalDays(lineupGrpcMapper.toFestivalDayProto(day)));
 
             responseObserver.onNext(response.build());
             responseObserver.onCompleted();

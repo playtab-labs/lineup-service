@@ -25,8 +25,8 @@ public class ScheduleQueryService {
     private final PerformanceScheduleRepository performanceScheduleRepository;
     private final FavoriteRepository favoriteRepository;
 
-    public List<PerformanceSchedule> getSchedulesByDay(int dayNumber, String stageName) {
-        FestivalDay festivalDay = festivalDayRepository.findByDayNumber(dayNumber)
+    public List<PerformanceSchedule> getSchedulesByDay(long dayId, String stageName) {
+        FestivalDay festivalDay = festivalDayRepository.findById(dayId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.FESTIVAL_DAY_NOT_FOUND));
 
         return performanceScheduleRepository.findByFestivalDayOrderByStartAtAsc(festivalDay).stream()
