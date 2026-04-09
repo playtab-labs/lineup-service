@@ -135,18 +135,76 @@ public class LineupGrpcMapper {
     }
 
 
+    // Stage (전체 필드, name + location_desc locale 적용) — GetSchedulesByDay 응답용
+    public com.playtab.lineupservice.grpc.proto.Stage toStageSlimProto(Stage stage, String locale) {
+        com.playtab.lineupservice.grpc.proto.Stage.Builder builder =
+                com.playtab.lineupservice.grpc.proto.Stage.newBuilder()
+                        .setId(stage.getId())
+                        .setDisplayOrder(stage.getDisplayOrder());
+
+        if (stage.getName() != null) {
+            builder.setName(toLocalizedText(stage.getName(), locale));
+        }
+
+        if (stage.getLocationDesc() != null) {
+            builder.setLocationDesc(toLocalizedText(stage.getLocationDesc(), locale));
+        }
+
+        if (stage.getCreatedAt() != null) {
+            builder.setCreatedAt(toTimestamp(stage.getCreatedAt()));
+        }
+
+        if (stage.getUpdatedAt() != null) {
+            builder.setUpdatedAt(toTimestamp(stage.getUpdatedAt()));
+        }
+
+        return builder.build();
+    }
+
+    // ArtistSchedule: schedule_id, 전체 performer(locale 적용), start_at, end_at, status, duration, timestamps
+    public com.playtab.lineupservice.grpc.proto.ArtistSchedule toArtistScheduleProto(
+            PerformanceSchedule schedule,
+            boolean isFavorited,
+            String locale
+    ) {
+        com.playtab.lineupservice.grpc.proto.ArtistSchedule.Builder builder =
+                com.playtab.lineupservice.grpc.proto.ArtistSchedule.newBuilder()
+                        .setScheduleId(schedule.getId())
+                        .setPerformer(toPerformerProto(schedule.getPerformer(), isFavorited, locale))
+                        .setStatus(toScheduleStatusProto(schedule.getStatus()))
+                        .setDuration(toPerformanceDurationProto(schedule));
+
+        if (schedule.getStartAt() != null) {
+            builder.setStartAt(toTimestamp(schedule.getStartAt()));
+        }
+
+        if (schedule.getEndAt() != null) {
+            builder.setEndAt(toTimestamp(schedule.getEndAt()));
+        }
+
+        if (schedule.getCreatedAt() != null) {
+            builder.setCreatedAt(toTimestamp(schedule.getCreatedAt()));
+        }
+
+        if (schedule.getUpdatedAt() != null) {
+            builder.setUpdatedAt(toTimestamp(schedule.getUpdatedAt()));
+        }
+
+        return builder.build();
+    }
+
     // 추가된 메서드
-    // PerformanceSchedule Entity -> PerformanceSchedule Proto
+    // PerformanceSchedule Entity -> PerformanceSchedule Proto (locale 적용)
     public com.playtab.lineupservice.grpc.proto.PerformanceSchedule toPerformanceScheduleProto(
             PerformanceSchedule schedule,
-            boolean isFavorited
+            boolean isFavorited,
+            String locale
     ) {
         com.playtab.lineupservice.grpc.proto.PerformanceSchedule.Builder builder =
                 com.playtab.lineupservice.grpc.proto.PerformanceSchedule.newBuilder()
                         .setId(schedule.getId())
-                        .setPerformer(toPerformerProto(schedule.getPerformer(), isFavorited))
+                        .setPerformer(toPerformerProto(schedule.getPerformer(), isFavorited, locale))
                         .setStage(toStageProto(schedule.getStage()))
-                        .setFestivalDay(toFestivalDayProto(schedule.getFestivalDay()))
                         .setStatus(toScheduleStatusProto(schedule.getStatus()))
                         .setDuration(toPerformanceDurationProto(schedule));
 
@@ -225,11 +283,56 @@ public class LineupGrpcMapper {
     }
 
 
+    // locale 적용 Performer 변환
+    public com.playtab.lineupservice.grpc.proto.Performer toPerformerProto(
+            com.playtab.lineupservice.entity.Performer performer,
+            boolean isFavorited,
+            String locale
+    ) {
+        com.playtab.lineupservice.grpc.proto.Performer.Builder builder =
+                com.playtab.lineupservice.grpc.proto.Performer.newBuilder()
+                        .setId(performer.getId())
+                        .setIsActive(Boolean.TRUE.equals(performer.getIsActive()))
+                        .setIsFavorited(isFavorited);
+
+        if (performer.getName() != null) {
+            builder.setName(toLocalizedText(performer.getName(), locale));
+        }
+
+        if (performer.getDescription() != null) {
+            builder.setDescription(toLocalizedText(performer.getDescription(), locale));
+        }
+
+        if (performer.getImageUrl() != null) {
+            builder.setImageUrl(performer.getImageUrl());
+        }
+
+        if (performer.getCreatedAt() != null) {
+            builder.setCreatedAt(toTimestamp(performer.getCreatedAt()));
+        }
+
+        if (performer.getUpdatedAt() != null) {
+            builder.setUpdatedAt(toTimestamp(performer.getUpdatedAt()));
+        }
+
+        return builder.build();
+    }
+
     // 기존 메서드 유지
     // Map<String, String> -> LocalizedText Proto
     private LocalizedText toLocalizedText(Map<String, String> values) {
         return LocalizedText.newBuilder()
                 .putAllValues(values)
+                .build();
+    }
+
+    // locale이 있으면 해당 locale 항목만, 없으면 전체 반환
+    private LocalizedText toLocalizedText(Map<String, String> values, String locale) {
+        if (locale == null || locale.isBlank() || !values.containsKey(locale)) {
+            return toLocalizedText(values);
+        }
+        return LocalizedText.newBuilder()
+                .putValues(locale, values.get(locale))
                 .build();
     }
 
