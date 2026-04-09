@@ -120,7 +120,7 @@ message Favorite {
 }
 
 message GetPerformersRequest {
-  bool active_only = 1;
+  optional bool active_only = 1;
   string stage_name = 2; // ARTIST / BUSKING / DJ / CLUB, 미지정 시 전체
 }
 

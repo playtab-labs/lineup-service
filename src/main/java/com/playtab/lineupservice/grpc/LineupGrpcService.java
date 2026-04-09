@@ -46,17 +46,24 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     @Override
     public void getPerformers(GetPerformersRequest request, StreamObserver<GetPerformersResponse> responseObserver) {
         try {
-            // 비로그인 조회를 위해 optional 방식으로 처리
             String userId = getOptionalCurrentUserId();
 
+            boolean activeOnly;
+            if (!request.hasActiveOnly()) {
+                activeOnly = true;
+            } else if (!request.getActiveOnly()) {
+                responseObserver.onNext(GetPerformersResponse.newBuilder().build());
+                responseObserver.onCompleted();
+                return;
+            } else {
+                activeOnly = true;
+            }
 
-            // 공연자 목록 조회를 QueryService에 위임
             List<Performer> performers = performerQueryService.getPerformers(
-                    request.getActiveOnly(),
+                    activeOnly,
                     request.getStageName()
             );
 
-            // 비로그인이면 빈 집합 반환되도록 QueryService에서 처리.
             Set<Long> favoriteIds = performerQueryService.getFavoritePerformerIds(userId, performers);
 
             GetPerformersResponse.Builder response = GetPerformersResponse.newBuilder();
