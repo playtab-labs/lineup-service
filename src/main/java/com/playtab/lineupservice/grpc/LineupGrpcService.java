@@ -47,6 +47,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     public void getPerformers(GetPerformersRequest request, StreamObserver<GetPerformersResponse> responseObserver) {
         try {
             String userId = getOptionalCurrentUserId();
+            String locale = request.getLocale();
 
             boolean activeOnly;
             if (!request.hasActiveOnly()) {
@@ -72,7 +73,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
                 boolean isFavorited = favoriteIds.contains(performer.getId());
 
                 response.addPerformers(
-                        lineupGrpcMapper.toPerformerProto(performer, isFavorited)
+                        lineupGrpcMapper.toPerformerProto(performer, isFavorited, locale)
                 );
             }
 
