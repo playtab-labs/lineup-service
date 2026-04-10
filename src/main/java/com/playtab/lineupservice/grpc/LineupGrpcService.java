@@ -4,45 +4,39 @@ import com.playtab.lineupservice.config.CurrentUserProvider;
 import com.playtab.lineupservice.entity.Favorite;
 import com.playtab.lineupservice.entity.Performer;
 import com.playtab.lineupservice.entity.PerformanceSchedule;
+import com.playtab.lineupservice.entity.Stage;
 import com.playtab.lineupservice.exception.GlobalGrpcExceptionHandler;
 import com.playtab.lineupservice.grpc.proto.*;
+import com.playtab.lineupservice.repository.PerformanceScheduleRepository;
 import com.playtab.lineupservice.service.FavoriteService;
-
-
-// 조회 전용 서비스 2개 추가
-// PerformerQueryService: 공연자 조회 전용
-// ScheduleQueryService: 스케줄 조회 전용
 import com.playtab.lineupservice.service.FestivalDayQueryService;
 import com.playtab.lineupservice.service.PerformerQueryService;
 import com.playtab.lineupservice.service.ScheduleQueryService;
-
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @GrpcService
 @RequiredArgsConstructor
 public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
 
     private final FavoriteService favoriteService;
-
-
-    // 조회 전용 서비스 필드 추가
     private final PerformerQueryService performerQueryService;
     private final ScheduleQueryService scheduleQueryService;
     private final FestivalDayQueryService festivalDayQueryService;
+    private final PerformanceScheduleRepository performanceScheduleRepository;
 
     private final CurrentUserProvider currentUserProvider;
     private final LineupGrpcMapper lineupGrpcMapper;
     private final GlobalGrpcExceptionHandler globalGrpcExceptionHandler;
 
-
-    // GetPerformers
-    // 비로그인/로그인 모두 공연자 목록 조회 가능
-    // 로그인 사용자인 경우 favorite 여부를 계산해서 is_favorited 반영
     @Override
     public void getPerformers(GetPerformersRequest request, StreamObserver<GetPerformersResponse> responseObserver) {
         try {
@@ -72,8 +66,21 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
             for (Performer performer : performers) {
                 boolean isFavorited = favoriteIds.contains(performer.getId());
 
+                List<Stage> stages = performanceScheduleRepository.findByPerformerId(performer.getId()).stream()
+                        .map(PerformanceSchedule::getStage)
+                        .filter(stage -> stage != null && stage.getId() != null)
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(
+                                        Stage::getId,
+                                        stage -> stage,
+                                        (existing, replacement) -> existing,
+                                        LinkedHashMap::new
+                                ),
+                                map -> new ArrayList<>(map.values())
+                        ));
+
                 response.addPerformers(
-                        lineupGrpcMapper.toPerformerProto(performer, isFavorited, locale)
+                        lineupGrpcMapper.toPerformerProto(performer, isFavorited, locale, stages)
                 );
             }
 
@@ -85,11 +92,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
         }
     }
 
-
-    // GetSchedulesByDay
-    // 특정 day_number 기준 공연 스케줄 조회
-    // stage_name 필터 반영
-    // 로그인 사용자인 경우 performer.is_favorited 반영
     @Override
     public void getSchedulesByDay(GetSchedulesByDayRequest request,
                                   StreamObserver<GetSchedulesByDayResponse> responseObserver) {
@@ -105,7 +107,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
 
             Set<Long> favoriteIds = scheduleQueryService.getFavoritePerformerIds(userId, schedules);
 
-            // display_order 순 정렬 후 stage별 그룹핑 (삽입 순서 유지)
             Map<Long, List<PerformanceSchedule>> byStage = schedules.stream()
                     .sorted(Comparator.comparingInt(s -> s.getStage().getDisplayOrder()))
                     .collect(Collectors.groupingBy(
@@ -139,7 +140,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
         }
     }
 
-
     @Override
     public void addFavorite(AddFavoriteRequest request, StreamObserver<AddFavoriteResponse> responseObserver) {
         try {
@@ -157,7 +157,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
             responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
         }
     }
-
 
     @Override
     public void removeFavorite(RemoveFavoriteRequest request, StreamObserver<RemoveFavoriteResponse> responseObserver) {
@@ -196,7 +195,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
         }
     }
 
-
     @Override
     public void getFestivalDays(GetFestivalDaysRequest request,
                                 StreamObserver<GetFestivalDaysResponse> responseObserver) {
@@ -213,8 +211,6 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
         }
     }
 
-
-    // 신규 private 헬퍼 메서드 추가
     private String getOptionalCurrentUserId() {
         try {
             return currentUserProvider.getCurrentUserId();
