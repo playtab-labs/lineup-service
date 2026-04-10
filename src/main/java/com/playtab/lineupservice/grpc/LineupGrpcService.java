@@ -56,7 +56,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
 
             List<Performer> performers = performerQueryService.getPerformers(
                     activeOnly,
-                    request.getStageName()
+                    request.getStageId()
             );
 
             Set<Long> favoriteIds = performerQueryService.getFavoritePerformerIds(userId, performers);
@@ -102,7 +102,7 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
             List<PerformanceSchedule> schedules =
                     scheduleQueryService.getSchedulesByDay(
                             request.getDayId(),
-                            request.getStageName()
+                            request.getStageId()
                     );
 
             Set<Long> favoriteIds = scheduleQueryService.getFavoritePerformerIds(userId, schedules);

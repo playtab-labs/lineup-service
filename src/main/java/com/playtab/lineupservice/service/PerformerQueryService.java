@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,9 +22,9 @@ public class PerformerQueryService {
     private final PerformanceScheduleRepository performanceScheduleRepository;
     private final FavoriteRepository favoriteRepository;
 
-    public List<Performer> getPerformers(boolean activeOnly, String stageName) {
+    public List<Performer> getPerformers(boolean activeOnly, long stageId) {
         return performanceScheduleRepository.findAll().stream()
-                .filter(schedule -> matchesStageName(schedule, stageName))
+                .filter(schedule -> matchesStageId(schedule, stageId))
                 .map(PerformanceSchedule::getPerformer)
                 .filter(performer -> !activeOnly || Boolean.TRUE.equals(performer.getIsActive()))
                 .collect(Collectors.collectingAndThen(
@@ -53,17 +52,13 @@ public class PerformerQueryService {
                 .collect(Collectors.toSet());
     }
 
-    private boolean matchesStageName(PerformanceSchedule schedule, String stageName) {
-        if (stageName == null || stageName.isBlank()) {
+    private boolean matchesStageId(PerformanceSchedule schedule, long stageId) {
+        if (stageId == 0L) {
             return true;
         }
 
-        String normalized = stageName.trim().toUpperCase(Locale.ROOT);
-
-        return schedule.getStage().getName() != null
-                && schedule.getStage().getName().values().stream()
-                .filter(value -> value != null && !value.isBlank())
-                .map(value -> value.trim().toUpperCase(Locale.ROOT))
-                .anyMatch(normalized::equals);
+        return schedule.getStage() != null
+                && schedule.getStage().getId() != null
+                && schedule.getStage().getId().equals(stageId);
     }
 }
