@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,12 +24,12 @@ public class ScheduleQueryService {
     private final PerformanceScheduleRepository performanceScheduleRepository;
     private final FavoriteRepository favoriteRepository;
 
-    public List<PerformanceSchedule> getSchedulesByDay(long dayId, String stageName) {
+    public List<PerformanceSchedule> getSchedulesByDay(long dayId, long stageId) {
         FestivalDay festivalDay = festivalDayRepository.findById(dayId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.FESTIVAL_DAY_NOT_FOUND));
 
         return performanceScheduleRepository.findByFestivalDayOrderByStartAtAsc(festivalDay).stream()
-                .filter(schedule -> matchesStageName(schedule, stageName))
+                .filter(schedule -> matchesStageId(schedule, stageId))
                 .toList();
     }
 
@@ -49,17 +48,13 @@ public class ScheduleQueryService {
                 .collect(Collectors.toSet());
     }
 
-    private boolean matchesStageName(PerformanceSchedule schedule, String stageName) {
-        if (stageName == null || stageName.isBlank()) {
+    private boolean matchesStageId(PerformanceSchedule schedule, long stageId) {
+        if (stageId == 0L) {
             return true;
         }
 
-        String normalized = stageName.trim().toUpperCase(Locale.ROOT);
-
-        return schedule.getStage().getName() != null
-                && schedule.getStage().getName().values().stream()
-                .filter(value -> value != null && !value.isBlank())
-                .map(value -> value.trim().toUpperCase(Locale.ROOT))
-                .anyMatch(normalized::equals);
+        return schedule.getStage() != null
+                && schedule.getStage().getId() != null
+                && schedule.getStage().getId().equals(stageId);
     }
 }
