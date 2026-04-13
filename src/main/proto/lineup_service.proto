@@ -60,6 +60,7 @@ message Performer {
   bool is_favorited = 6;
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
+  repeated LocalizedText stage_names = 9;
 }
 
 message Stage {

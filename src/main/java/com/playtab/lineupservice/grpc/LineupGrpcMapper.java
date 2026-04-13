@@ -1,36 +1,23 @@
 package com.playtab.lineupservice.grpc;
 
-
-// 기존 유지 import
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
-import com.playtab.lineupservice.grpc.proto.LocalizedText;
-import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Map;
-
-
-// 추가된 import
-// GetSchedulesByDay 응답 매핑용 추가
 import com.playtab.lineupservice.entity.FestivalDay;
 import com.playtab.lineupservice.entity.PerformanceSchedule;
 import com.playtab.lineupservice.entity.Stage;
 import com.playtab.lineupservice.entity.enums.ScheduleStatus;
+import com.playtab.lineupservice.grpc.proto.LocalizedText;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-
-
-
-// grpc proto 쪽에도 Performer, Favorite 이름이 똑같이 존재해서
-// import 충돌을 피하려고 entity 쪽은 "풀패키지명"으로 직접 사용함.
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class LineupGrpcMapper {
 
-    // Performer Entity -> Performer Proto
-    // 파라미터 타입을 import 대신 풀패키지명으로 사용
     public com.playtab.lineupservice.grpc.proto.Performer toPerformerProto(
             com.playtab.lineupservice.entity.Performer performer,
             boolean isFavorited
@@ -64,8 +51,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-    // Favorite Entity -> Favorite Proto
-    // Favorite도 proto.Favorite 와 이름 충돌 가능하므로 entity쪽은 풀패키지명 사용
     public com.playtab.lineupservice.grpc.proto.Favorite toFavoriteProto(
             com.playtab.lineupservice.entity.Favorite favorite
     ) {
@@ -73,7 +58,6 @@ public class LineupGrpcMapper {
                 com.playtab.lineupservice.grpc.proto.Favorite.newBuilder()
                         .setId(favorite.getId())
                         .setUserId(favorite.getUserId())
-
                         .setPerformerId(favorite.getPerformer().getId());
 
         if (favorite.getCreatedAt() != null) {
@@ -83,8 +67,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-    // 추가된 메서드
-    // Stage Entity -> Stage Proto
     public com.playtab.lineupservice.grpc.proto.Stage toStageProto(Stage stage) {
         com.playtab.lineupservice.grpc.proto.Stage.Builder builder =
                 com.playtab.lineupservice.grpc.proto.Stage.newBuilder()
@@ -110,9 +92,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-
-    // 추가된 메서드
-    // FestivalDay Entity -> FestivalDay Proto
     public com.playtab.lineupservice.grpc.proto.FestivalDay toFestivalDayProto(FestivalDay festivalDay) {
         com.playtab.lineupservice.grpc.proto.FestivalDay.Builder builder =
                 com.playtab.lineupservice.grpc.proto.FestivalDay.newBuilder()
@@ -134,8 +113,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-
-    // Stage (전체 필드, name + location_desc locale 적용) — GetSchedulesByDay 응답용
     public com.playtab.lineupservice.grpc.proto.Stage toStageSlimProto(Stage stage, String locale) {
         com.playtab.lineupservice.grpc.proto.Stage.Builder builder =
                 com.playtab.lineupservice.grpc.proto.Stage.newBuilder()
@@ -161,7 +138,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-    // ArtistSchedule: schedule_id, 전체 performer(locale 적용), start_at, end_at, status, duration, timestamps
     public com.playtab.lineupservice.grpc.proto.ArtistSchedule toArtistScheduleProto(
             PerformanceSchedule schedule,
             boolean isFavorited,
@@ -193,8 +169,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-    // 추가된 메서드
-    // PerformanceSchedule Entity -> PerformanceSchedule Proto (locale 적용)
     public com.playtab.lineupservice.grpc.proto.PerformanceSchedule toPerformanceScheduleProto(
             PerformanceSchedule schedule,
             boolean isFavorited,
@@ -227,10 +201,6 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-
-    // 추가된 메서드
-    // duration 계산
-    // proto의 PerformanceDuration 생성
     private com.playtab.lineupservice.grpc.proto.PerformanceDuration toPerformanceDurationProto(
             PerformanceSchedule schedule
     ) {
@@ -260,9 +230,6 @@ public class LineupGrpcMapper {
                 .build();
     }
 
-
-    // 추가된 메서드
-    // entity enum -> proto enum 변환
     private com.playtab.lineupservice.grpc.proto.ScheduleStatusProto toScheduleStatusProto(
             ScheduleStatus status
     ) {
@@ -270,8 +237,6 @@ public class LineupGrpcMapper {
             return com.playtab.lineupservice.grpc.proto.ScheduleStatusProto.SCHEDULE_STATUS_PROTO_UNSPECIFIED;
         }
 
-
-        // 만약 enum 이름이 다르면 여기만 맞춰서 수정하면 됨.
         return switch (status) {
             case SCHEDULED ->
                     com.playtab.lineupservice.grpc.proto.ScheduleStatusProto.SCHEDULE_STATUS_PROTO_SCHEDULED;
@@ -282,8 +247,6 @@ public class LineupGrpcMapper {
         };
     }
 
-
-    // locale 적용 Performer 변환
     public com.playtab.lineupservice.grpc.proto.Performer toPerformerProto(
             com.playtab.lineupservice.entity.Performer performer,
             boolean isFavorited,
@@ -318,15 +281,55 @@ public class LineupGrpcMapper {
         return builder.build();
     }
 
-    // 기존 메서드 유지
-    // Map<String, String> -> LocalizedText Proto
+    public com.playtab.lineupservice.grpc.proto.Performer toPerformerProto(
+            com.playtab.lineupservice.entity.Performer performer,
+            boolean isFavorited,
+            String locale,
+            List<Stage> stages
+    ) {
+        com.playtab.lineupservice.grpc.proto.Performer.Builder builder =
+                com.playtab.lineupservice.grpc.proto.Performer.newBuilder()
+                        .setId(performer.getId())
+                        .setIsActive(Boolean.TRUE.equals(performer.getIsActive()))
+                        .setIsFavorited(isFavorited);
+
+        if (performer.getName() != null) {
+            builder.setName(toLocalizedText(performer.getName(), locale));
+        }
+
+        if (performer.getDescription() != null) {
+            builder.setDescription(toLocalizedText(performer.getDescription(), locale));
+        }
+
+        if (performer.getImageUrl() != null) {
+            builder.setImageUrl(performer.getImageUrl());
+        }
+
+        if (performer.getCreatedAt() != null) {
+            builder.setCreatedAt(toTimestamp(performer.getCreatedAt()));
+        }
+
+        if (performer.getUpdatedAt() != null) {
+            builder.setUpdatedAt(toTimestamp(performer.getUpdatedAt()));
+        }
+
+        if (stages != null && !stages.isEmpty()) {
+            for (Stage stage : stages) {
+                if (stage.getName() != null) {
+                    builder.addStageNames(toLocalizedText(stage.getName(), locale));
+                }
+            }
+        }
+
+        return builder.build();
+    }
+
     private LocalizedText toLocalizedText(Map<String, String> values) {
         return LocalizedText.newBuilder()
                 .putAllValues(values)
                 .build();
     }
 
-    // locale이 있으면 해당 locale 항목만, 없으면 전체 반환
     private LocalizedText toLocalizedText(Map<String, String> values, String locale) {
         if (locale == null || locale.isBlank() || !values.containsKey(locale)) {
             return toLocalizedText(values);
@@ -336,9 +339,6 @@ public class LineupGrpcMapper {
                 .build();
     }
 
-
-    // 기존 메서드 유지
-    // LocalDateTime -> protobuf Timestamp
     private Timestamp toTimestamp(LocalDateTime localDateTime) {
         return Timestamps.fromMillis(localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
     }
