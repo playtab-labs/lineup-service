@@ -2,11 +2,10 @@ spring:
   application:
     name: lineup-service
 
-
   datasource:
-    url: ${DB:URL}
-    username: ${DB:USERNAME}
-    password: ${DB:PASSWORD}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
