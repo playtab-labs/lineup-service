@@ -14,4 +14,7 @@ public interface PerformanceScheduleRepository extends JpaRepository<Performance
 
     @Query("SELECT ps FROM PerformanceSchedule ps JOIN FETCH ps.stage WHERE ps.performer.id = :performerId")
     List<PerformanceSchedule> findByPerformerId(@Param("performerId") Long performerId);
+
+    @Query("SELECT ps FROM PerformanceSchedule ps JOIN FETCH ps.performer JOIN FETCH ps.stage JOIN FETCH ps.festivalDay WHERE ps.performer.isActive = true ORDER BY ps.festivalDay.dayNumber ASC, ps.startAt ASC")
+    List<PerformanceSchedule> findAllActiveWithFestivalDay();
 }
