@@ -2,6 +2,7 @@ package com.playtab.lineupservice.grpc;
 
 import com.playtab.lineupservice.config.CurrentUserProvider;
 import com.playtab.lineupservice.entity.Favorite;
+import com.playtab.lineupservice.entity.FestivalDay;
 import com.playtab.lineupservice.entity.Performer;
 import com.playtab.lineupservice.entity.PerformanceSchedule;
 import com.playtab.lineupservice.entity.Stage;
@@ -206,6 +207,70 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
 
             responseObserver.onNext(response.build());
             responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void getPerformersByDay(GetPerformersByDayRequest request,
+                                   StreamObserver<GetPerformersByDayResponse> responseObserver) {
+        try {
+            String locale = request.getLocale();
+            String userId = getOptionalCurrentUserId();
+
+            List<FestivalDay> allDays = festivalDayQueryService.getFestivalDays();
+            List<PerformanceSchedule> allSchedules = performanceScheduleRepository.findAllActiveWithFestivalDay();
+
+            List<Performer> allPerformers = allSchedules.stream()
+                    .map(PerformanceSchedule::getPerformer)
+                    .distinct()
+                    .toList();
+            Set<Long> favoriteIds = performerQueryService.getFavoritePerformerIds(userId, allPerformers);
+
+            // 공연자별 스테이지 목록 (중복 제거)
+            Map<Long, List<Stage>> stagesByPerformerId = new LinkedHashMap<>();
+            for (PerformanceSchedule schedule : allSchedules) {
+                Long performerId = schedule.getPerformer().getId();
+                Stage stage = schedule.getStage();
+                stagesByPerformerId.computeIfAbsent(performerId, k -> new ArrayList<>());
+                List<Stage> stages = stagesByPerformerId.get(performerId);
+                if (stages.stream().noneMatch(s -> s.getId().equals(stage.getId()))) {
+                    stages.add(stage);
+                }
+            }
+
+            // 날짜별 공연자 그룹핑 (날짜 내 중복 제거)
+            Map<Long, LinkedHashMap<Long, PerformanceSchedule>> schedulesByDayId = new LinkedHashMap<>();
+            for (PerformanceSchedule schedule : allSchedules) {
+                long dayId = schedule.getFestivalDay().getId();
+                schedulesByDayId.computeIfAbsent(dayId, k -> new LinkedHashMap<>())
+                        .putIfAbsent(schedule.getPerformer().getId(), schedule);
+            }
+
+            GetPerformersByDayResponse.Builder response = GetPerformersByDayResponse.newBuilder();
+
+            for (FestivalDay day : allDays) {
+                PerformersByDay.Builder dayBuilder = PerformersByDay.newBuilder()
+                        .setFestivalDay(lineupGrpcMapper.toFestivalDayProto(day));
+
+                Map<Long, PerformanceSchedule> daySchedules =
+                        schedulesByDayId.getOrDefault(day.getId(), new LinkedHashMap<>());
+
+                for (PerformanceSchedule schedule : daySchedules.values()) {
+                    Performer performer = schedule.getPerformer();
+                    boolean isFavorited = favoriteIds.contains(performer.getId());
+                    List<Stage> stages = stagesByPerformerId.getOrDefault(performer.getId(), List.of());
+                    dayBuilder.addPerformers(
+                            lineupGrpcMapper.toPerformerProto(performer, isFavorited, locale, stages));
+                }
+
+                response.addDays(dayBuilder.build());
+            }
+
+            responseObserver.onNext(response.build());
+            responseObserver.onCompleted();
+
         } catch (Exception e) {
             responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
         }
