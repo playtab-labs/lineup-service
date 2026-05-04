@@ -42,4 +42,10 @@ public class Stage extends BaseTimeEntity {
         this.locationDesc = locationDesc;
         this.displayOrder = displayOrder != null ? displayOrder : 0;
     }
+
+    public void update(Map<String, String> name, Map<String, String> locationDesc, Integer displayOrder) {
+        this.name = name;
+        this.locationDesc = locationDesc;
+        this.displayOrder = displayOrder != null ? displayOrder : 0;
+    }
 }

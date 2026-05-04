@@ -70,4 +70,17 @@ public class PerformanceSchedule extends BaseTimeEntity {
         this.endAt = endAt;
         this.status = status != null ? status : ScheduleStatus.SCHEDULED;
     }
+
+    public void update(Performer performer, Stage stage, FestivalDay festivalDay,
+                       LocalDateTime startAt, LocalDateTime endAt, ScheduleStatus status) {
+        if (startAt != null && endAt != null && !startAt.isBefore(endAt)) {
+            throw new IllegalArgumentException("startAt must be before endAt");
+        }
+        this.performer = performer;
+        this.stage = stage;
+        this.festivalDay = festivalDay;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.status = status != null ? status : ScheduleStatus.SCHEDULED;
+    }
 }

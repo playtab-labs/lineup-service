@@ -43,6 +43,28 @@ service LineupService {
   // - 비로그인 가능
   // - 전체 날짜에 대해 날짜별로 그룹핑된 공연자 목록 반환
   rpc GetPerformersByDay (GetPerformersByDayRequest) returns (GetPerformersByDayResponse);
+
+  // 관리자 RPCs (x-role = ADMIN 인 metadata 필요)
+  rpc AdminCreateFestivalDay (AdminCreateFestivalDayRequest) returns (AdminCreateFestivalDayResponse);
+
+  rpc AdminUpdateFestivalDay (AdminUpdateFestivalDayRequest) returns (AdminUpdateFestivalDayResponse);
+
+  rpc AdminDeleteFestivalDay (AdminDeleteFestivalDayRequest) returns (AdminDeleteFestivalDayResponse);
+
+  // Stage 관리
+  rpc AdminCreateStage (AdminCreateStageRequest) returns (AdminCreateStageResponse);
+  rpc AdminUpdateStage (AdminUpdateStageRequest) returns (AdminUpdateStageResponse);
+  rpc AdminDeleteStage (AdminDeleteStageRequest) returns (AdminDeleteStageResponse);
+
+  // Performer 관리
+  rpc AdminCreatePerformer (AdminCreatePerformerRequest) returns (AdminCreatePerformerResponse);
+  rpc AdminUpdatePerformer (AdminUpdatePerformerRequest) returns (AdminUpdatePerformerResponse);
+  rpc AdminDeletePerformer (AdminDeletePerformerRequest) returns (AdminDeletePerformerResponse);
+
+  // PerformanceSchedule 관리
+  rpc AdminCreateSchedule (AdminCreateScheduleRequest) returns (AdminCreateScheduleResponse);
+  rpc AdminUpdateSchedule (AdminUpdateScheduleRequest) returns (AdminUpdateScheduleResponse);
+  rpc AdminDeleteSchedule (AdminDeleteScheduleRequest) returns (AdminDeleteScheduleResponse);
 }
 
 message LocalizedText {
@@ -186,4 +208,132 @@ message GetPerformersByDayRequest {
 
 message GetPerformersByDayResponse {
   repeated PerformersByDay days = 1;
+}
+
+message AdminCreateFestivalDayRequest {
+  int32 day_number = 1;
+  string event_date = 2; //yyyy - mm - dd
+}
+
+message AdminCreateFestivalDayResponse {
+  FestivalDay festival_day = 1;
+}
+
+message AdminUpdateFestivalDayRequest {
+  int64 id = 1;
+  int32 day_number = 2;
+  string event_date = 3; //yyyy - mm - dd
+}
+
+message AdminUpdateFestivalDayResponse {
+  FestivalDay festival_day = 1;
+}
+
+message AdminDeleteFestivalDayRequest {
+  int64 id = 1;
+}
+
+message AdminDeleteFestivalDayResponse {
+  bool success = 1;
+}
+
+// ─── Admin: Stage ───
+
+message AdminCreateStageRequest {
+  LocalizedText name = 1;
+  LocalizedText location_desc = 2;
+  int32 display_order = 3;
+}
+
+message AdminCreateStageResponse {
+  Stage stage = 1;
+}
+
+message AdminUpdateStageRequest {
+  int64 id = 1;
+  LocalizedText name = 2;
+  LocalizedText location_desc = 3;
+  int32 display_order = 4;
+}
+
+message AdminUpdateStageResponse {
+  Stage stage = 1;
+}
+
+message AdminDeleteStageRequest {
+  int64 id = 1;
+}
+
+message AdminDeleteStageResponse {
+  bool success = 1;
+}
+
+// ─── Admin: Performer ───
+
+message AdminCreatePerformerRequest {
+  LocalizedText name = 1;
+  LocalizedText description = 2;
+  string image_url = 3;
+  bool is_active = 4;
+}
+
+message AdminCreatePerformerResponse {
+  Performer performer = 1;
+}
+
+message AdminUpdatePerformerRequest {
+  int64 id = 1;
+  LocalizedText name = 2;
+  LocalizedText description = 3;
+  string image_url = 4;
+  bool is_active = 5;
+}
+
+message AdminUpdatePerformerResponse {
+  Performer performer = 1;
+}
+
+message AdminDeletePerformerRequest {
+  int64 id = 1;
+}
+
+message AdminDeletePerformerResponse {
+  bool success = 1;
+}
+
+// ─── Admin: PerformanceSchedule ───
+
+message AdminCreateScheduleRequest {
+  int64 performer_id = 1;
+  int64 stage_id = 2;
+  int64 festival_day_id = 3;
+  string start_at = 4; // ISO_LOCAL_DATE_TIME, ex) 2026-05-15T18:00:00
+  string end_at = 5;
+  ScheduleStatusProto status = 6;
+}
+
+message AdminCreateScheduleResponse {
+  PerformanceSchedule schedule = 1;
+}
+
+message AdminUpdateScheduleRequest {
+  int64 id = 1;
+  int64 performer_id = 2;
+  int64 stage_id = 3;
+  int64 festival_day_id = 4;
+  string start_at = 5;
+  string end_at = 6;
+  ScheduleStatusProto status = 7;
+}
+
+message AdminUpdateScheduleResponse {
+  PerformanceSchedule schedule = 1;
+}
+
+message AdminDeleteScheduleRequest {
+  int64 id = 1;
+}
+
+message AdminDeleteScheduleResponse {
+  bool success = 1;
 }

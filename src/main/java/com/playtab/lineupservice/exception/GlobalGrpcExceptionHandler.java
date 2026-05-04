@@ -8,17 +8,33 @@ import org.springframework.stereotype.Component;
 public class GlobalGrpcExceptionHandler {
 
     public StatusRuntimeException toStatusRuntimeException(Exception e) {
-        if (e instanceof NotFoundException notFoundException) {
-            return notFoundException.getErrorCode()
-                    .getGrpcStatus()
-                    .withDescription(notFoundException.getMessage())
+        if (e instanceof NotFoundException ex) {
+            return ex.getErrorCode().getGrpcStatus()
+                    .withDescription(ex.getMessage())
                     .asRuntimeException();
         }
 
-        if (e instanceof DuplicateFavoriteException duplicateFavoriteException) {
-            return duplicateFavoriteException.getErrorCode()
-                    .getGrpcStatus()
-                    .withDescription(duplicateFavoriteException.getMessage())
+        if (e instanceof DuplicateFavoriteException ex) {
+            return ex.getErrorCode().getGrpcStatus()
+                    .withDescription(ex.getMessage())
+                    .asRuntimeException();
+        }
+
+        if (e instanceof PermissionDeniedException ex) {
+            return ex.getErrorCode().getGrpcStatus()
+                    .withDescription(ex.getMessage())
+                    .asRuntimeException();
+        }
+
+        if (e instanceof ConflictException ex) {
+            return ex.getErrorCode().getGrpcStatus()
+                    .withDescription(ex.getMessage())
+                    .asRuntimeException();
+        }
+
+        if (e instanceof InvalidArgumentException ex) {
+            return ex.getErrorCode().getGrpcStatus()
+                    .withDescription(ex.getMessage())
                     .asRuntimeException();
         }
 

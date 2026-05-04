@@ -1,18 +1,23 @@
 package com.playtab.lineupservice.grpc;
 
 import com.playtab.lineupservice.config.CurrentUserProvider;
+import com.playtab.lineupservice.config.GrpcIdentityInterceptor;
 import com.playtab.lineupservice.entity.Favorite;
 import com.playtab.lineupservice.entity.FestivalDay;
-import com.playtab.lineupservice.entity.Performer;
 import com.playtab.lineupservice.entity.PerformanceSchedule;
+import com.playtab.lineupservice.entity.Performer;
 import com.playtab.lineupservice.entity.Stage;
 import com.playtab.lineupservice.exception.GlobalGrpcExceptionHandler;
 import com.playtab.lineupservice.grpc.proto.*;
 import com.playtab.lineupservice.repository.PerformanceScheduleRepository;
 import com.playtab.lineupservice.service.FavoriteService;
+import com.playtab.lineupservice.service.FestivalDayCommandService;
 import com.playtab.lineupservice.service.FestivalDayQueryService;
+import com.playtab.lineupservice.service.PerformanceScheduleCommandService;
+import com.playtab.lineupservice.service.PerformerCommandService;
 import com.playtab.lineupservice.service.PerformerQueryService;
 import com.playtab.lineupservice.service.ScheduleQueryService;
+import com.playtab.lineupservice.service.StageCommandService;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,6 +37,10 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
     private final PerformerQueryService performerQueryService;
     private final ScheduleQueryService scheduleQueryService;
     private final FestivalDayQueryService festivalDayQueryService;
+    private final FestivalDayCommandService festivalDayCommandService;
+    private final StageCommandService stageCommandService;
+    private final PerformerCommandService performerCommandService;
+    private final PerformanceScheduleCommandService performanceScheduleCommandService;
     private final PerformanceScheduleRepository performanceScheduleRepository;
 
     private final CurrentUserProvider currentUserProvider;
@@ -271,6 +280,256 @@ public class LineupGrpcService extends LineupServiceGrpc.LineupServiceImplBase {
             responseObserver.onNext(response.build());
             responseObserver.onCompleted();
 
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    // ────────────────────────────────────────
+    // Admin: FestivalDay
+    // ────────────────────────────────────────
+
+    @Override
+    public void adminCreateFestivalDay(
+            AdminCreateFestivalDayRequest request,
+            StreamObserver<AdminCreateFestivalDayResponse> responseObserver
+    ) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+
+            FestivalDay created = festivalDayCommandService.create(
+                    request.getDayNumber(),
+                    request.getEventDate()
+            );
+
+            responseObserver.onNext(
+                    AdminCreateFestivalDayResponse.newBuilder()
+                            .setFestivalDay(lineupGrpcMapper.toFestivalDayProto(created))
+                            .build()
+            );
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminUpdateFestivalDay(
+            AdminUpdateFestivalDayRequest request,
+            StreamObserver<AdminUpdateFestivalDayResponse> responseObserver
+    ) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+
+            FestivalDay updated = festivalDayCommandService.update(
+                    request.getId(),
+                    request.getDayNumber(),
+                    request.getEventDate()
+            );
+
+            responseObserver.onNext(
+                    AdminUpdateFestivalDayResponse.newBuilder()
+                            .setFestivalDay(lineupGrpcMapper.toFestivalDayProto(updated))
+                            .build()
+            );
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminDeleteFestivalDay(
+            AdminDeleteFestivalDayRequest request,
+            StreamObserver<AdminDeleteFestivalDayResponse> responseObserver
+    ) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+
+            festivalDayCommandService.delete(request.getId());
+
+            responseObserver.onNext(
+                    AdminDeleteFestivalDayResponse.newBuilder()
+                            .setSuccess(true)
+                            .build()
+            );
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    // ────────────────────────────────────────
+    // Admin: Stage
+    // ────────────────────────────────────────
+
+    @Override
+    public void adminCreateStage(AdminCreateStageRequest request,
+                                 StreamObserver<AdminCreateStageResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            Stage created = stageCommandService.create(
+                    request.getName().getValuesMap(),
+                    request.getLocationDesc().getValuesMap(),
+                    request.getDisplayOrder()
+            );
+            responseObserver.onNext(AdminCreateStageResponse.newBuilder()
+                    .setStage(lineupGrpcMapper.toStageProto(created))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminUpdateStage(AdminUpdateStageRequest request,
+                                 StreamObserver<AdminUpdateStageResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            Stage updated = stageCommandService.update(
+                    request.getId(),
+                    request.getName().getValuesMap(),
+                    request.getLocationDesc().getValuesMap(),
+                    request.getDisplayOrder()
+            );
+            responseObserver.onNext(AdminUpdateStageResponse.newBuilder()
+                    .setStage(lineupGrpcMapper.toStageProto(updated))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminDeleteStage(AdminDeleteStageRequest request,
+                                 StreamObserver<AdminDeleteStageResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            stageCommandService.delete(request.getId());
+            responseObserver.onNext(AdminDeleteStageResponse.newBuilder().setSuccess(true).build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    // ────────────────────────────────────────
+    // Admin: Performer
+    // ────────────────────────────────────────
+
+    @Override
+    public void adminCreatePerformer(AdminCreatePerformerRequest request,
+                                     StreamObserver<AdminCreatePerformerResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            Performer created = performerCommandService.create(
+                    request.getName().getValuesMap(),
+                    request.getDescription().getValuesMap(),
+                    request.getImageUrl(),
+                    request.getIsActive()
+            );
+            responseObserver.onNext(AdminCreatePerformerResponse.newBuilder()
+                    .setPerformer(lineupGrpcMapper.toPerformerProto(created, false))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminUpdatePerformer(AdminUpdatePerformerRequest request,
+                                     StreamObserver<AdminUpdatePerformerResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            Performer updated = performerCommandService.update(
+                    request.getId(),
+                    request.getName().getValuesMap(),
+                    request.getDescription().getValuesMap(),
+                    request.getImageUrl(),
+                    request.getIsActive()
+            );
+            responseObserver.onNext(AdminUpdatePerformerResponse.newBuilder()
+                    .setPerformer(lineupGrpcMapper.toPerformerProto(updated, false))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminDeletePerformer(AdminDeletePerformerRequest request,
+                                     StreamObserver<AdminDeletePerformerResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            performerCommandService.delete(request.getId());
+            responseObserver.onNext(AdminDeletePerformerResponse.newBuilder().setSuccess(true).build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    // ────────────────────────────────────────
+    // Admin: PerformanceSchedule
+    // ────────────────────────────────────────
+
+    @Override
+    public void adminCreateSchedule(AdminCreateScheduleRequest request,
+                                    StreamObserver<AdminCreateScheduleResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            PerformanceSchedule created = performanceScheduleCommandService.create(
+                    request.getPerformerId(),
+                    request.getStageId(),
+                    request.getFestivalDayId(),
+                    request.getStartAt(),
+                    request.getEndAt(),
+                    request.getStatus()
+            );
+            responseObserver.onNext(AdminCreateScheduleResponse.newBuilder()
+                    .setSchedule(lineupGrpcMapper.toPerformanceScheduleProto(created, false, ""))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminUpdateSchedule(AdminUpdateScheduleRequest request,
+                                    StreamObserver<AdminUpdateScheduleResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            PerformanceSchedule updated = performanceScheduleCommandService.update(
+                    request.getId(),
+                    request.getPerformerId(),
+                    request.getStageId(),
+                    request.getFestivalDayId(),
+                    request.getStartAt(),
+                    request.getEndAt(),
+                    request.getStatus()
+            );
+            responseObserver.onNext(AdminUpdateScheduleResponse.newBuilder()
+                    .setSchedule(lineupGrpcMapper.toPerformanceScheduleProto(updated, false, ""))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
+        }
+    }
+
+    @Override
+    public void adminDeleteSchedule(AdminDeleteScheduleRequest request,
+                                    StreamObserver<AdminDeleteScheduleResponse> responseObserver) {
+        try {
+            GrpcIdentityInterceptor.requireAdmin();
+            performanceScheduleCommandService.delete(request.getId());
+            responseObserver.onNext(AdminDeleteScheduleResponse.newBuilder().setSuccess(true).build());
+            responseObserver.onCompleted();
         } catch (Exception e) {
             responseObserver.onError(globalGrpcExceptionHandler.toStatusRuntimeException(e));
         }

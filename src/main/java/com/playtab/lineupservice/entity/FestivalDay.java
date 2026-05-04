@@ -34,4 +34,9 @@ public class FestivalDay extends BaseTimeEntity {
         this.dayNumber = dayNumber;
         this.eventDate = eventDate;
     }
+
+    public void update(int dayNumber, LocalDate eventDate) {
+        this.dayNumber = dayNumber;
+        this.eventDate = eventDate;
+    }
 }
