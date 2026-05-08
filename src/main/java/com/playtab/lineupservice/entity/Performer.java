@@ -46,4 +46,12 @@ public class Performer extends BaseTimeEntity {
         this.imageUrl = imageUrl;
         this.isActive = isActive != null ? isActive : true;
     }
+
+    public void update(Map<String, String> name, Map<String, String> description,
+                       String imageUrl, Boolean isActive) {
+        this.name = name;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.isActive = isActive != null ? isActive : true;
+    }
 }
