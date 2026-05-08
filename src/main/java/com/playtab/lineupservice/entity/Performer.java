@@ -1,8 +1,6 @@
 package com.playtab.lineupservice.entity;
 
-import com.playtab.lineupservice.converter.LocalizedTextConverter;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +10,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.Map;
 
@@ -25,11 +25,11 @@ public class Performer extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Convert(converter = LocalizedTextConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "name", nullable = false, columnDefinition = "jsonb")
     private Map<String, String> name;
 
-    @Convert(converter = LocalizedTextConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "description", columnDefinition = "jsonb")
     private Map<String, String> description;
 
